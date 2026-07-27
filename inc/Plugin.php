@@ -6,6 +6,7 @@ namespace RhSmtp;
 
 use RhBlueprint\Core\Core;
 use RhBlueprint\Core\Settings\SettingsPage;
+use RhSmtp\Admin\MailLogPage;
 use RhSmtp\Admin\SmtpGroup;
 use RhSmtp\Admin\SmtpToolsPage;
 
@@ -31,6 +32,10 @@ final class Plugin
         $smtp = new Smtp();
         $smtp->boot();
         (new SmtpToolsPage($smtp))->boot();
+
+        $mailLog = new MailLog();
+        $mailLog->boot();
+        (new MailLogPage($mailLog))->boot();
 
         add_filter('rh-blueprint/dashboard/quick_links', static function (array $links): array {
             $links[] = [

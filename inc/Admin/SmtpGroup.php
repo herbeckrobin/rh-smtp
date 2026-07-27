@@ -27,6 +27,8 @@ final class SmtpGroup implements GroupInterface
     public const FIELD_TIMEOUT = 'timeout';
     public const FIELD_REDIRECT_ENABLED = 'redirect_enabled';
     public const FIELD_REDIRECT_TO = 'redirect_to';
+    public const FIELD_LOG_ENABLED = 'log_enabled';
+    public const FIELD_LOG_RETENTION = 'log_retention';
 
     public function id(): string
     {
@@ -133,6 +135,22 @@ final class SmtpGroup implements GroupInterface
                 description: __('Zieladresse für die Umleitung. Der ursprüngliche Empfänger wird im Betreff vermerkt.', 'rh-smtp'),
                 default: '',
                 keywords: ['umleitung', 'redirect', 'adresse'],
+            ),
+            new SettingField(
+                id: self::FIELD_LOG_ENABLED,
+                type: SettingField::TYPE_BOOLEAN,
+                label: __('Mail-Log führen', 'rh-smtp'),
+                description: __('Protokolliert jede ausgehende Mail (Zeit, Empfänger, Betreff, Status), damit du bei „ist die Mail angekommen?" nachschauen kannst. Nur Metadaten, nicht der Inhalt.', 'rh-smtp'),
+                default: false,
+                keywords: ['log', 'protokoll', 'verlauf', 'history'],
+            ),
+            new SettingField(
+                id: self::FIELD_LOG_RETENTION,
+                type: SettingField::TYPE_TEXT,
+                label: __('Log-Aufbewahrung (Tage)', 'rh-smtp'),
+                description: __('Ältere Einträge werden automatisch entfernt. Standard: 30.', 'rh-smtp'),
+                default: '30',
+                keywords: ['log', 'aufbewahrung', 'retention', 'tage'],
             ),
         ];
     }
