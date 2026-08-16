@@ -25,8 +25,14 @@ final class SmtpGroup implements GroupInterface
     public const FIELD_FROM_EMAIL = 'from_email';
     public const FIELD_FROM_NAME = 'from_name';
     public const FIELD_TIMEOUT = 'timeout';
+    /** Altbestand: der frühere Staging-Schalter. Kein Feld mehr, wird nur noch gelesen. */
     public const FIELD_REDIRECT_ENABLED = 'redirect_enabled';
+
     public const FIELD_REDIRECT_TO = 'redirect_to';
+    public const FIELD_TEST_MODE = 'test_mode';
+    public const FIELD_REPORT_ENABLED = 'report_enabled';
+    public const FIELD_REPORT_RHYTHM = 'report_rhythm';
+    public const FIELD_REPORT_EMAIL = 'report_email';
     public const FIELD_LOG_ENABLED = 'log_enabled';
     public const FIELD_LOG_RETENTION = 'log_retention';
 
@@ -121,20 +127,55 @@ final class SmtpGroup implements GroupInterface
                 keywords: ['timeout', 'wartezeit', 'hang'],
             ),
             new SettingField(
-                id: self::FIELD_REDIRECT_ENABLED,
-                type: SettingField::TYPE_BOOLEAN,
-                label: __('Alle Mails umleiten (Staging-Schutz)', 'rh-smtp'),
-                description: __('Leitet JEDE ausgehende Mail an eine feste Adresse um, statt an die echten Empfänger. Auf Staging/Test aktivieren, damit keine Mail versehentlich an echte Kunden geht.', 'rh-smtp'),
-                default: false,
-                keywords: ['umleitung', 'redirect', 'staging', 'test'],
+                id: self::FIELD_TEST_MODE,
+                type: SettingField::TYPE_SELECT,
+                label: __('Testmodus', 'rh-smtp'),
+                description: __('Schützt davor, dass eine Kopie der Website echte Mails an echte Kunden schickt. Automatisch heisst: auf lokalen Installationen und Staging wird umgeleitet, im Livebetrieb nicht. Betrifft jede Mail der Website, auch die von Formularen und fremden Plugins.', 'rh-smtp'),
+                default: 'auto',
+                choices: [
+                    'auto' => __('Automatisch nach Umgebung (empfohlen)', 'rh-smtp'),
+                    'off' => __('Aus, alles geht an die echten Empfänger', 'rh-smtp'),
+                    'redirect' => __('Umleiten an die Testadresse', 'rh-smtp'),
+                    'block' => __('Nichts verschicken', 'rh-smtp'),
+                ],
+                keywords: ['test', 'staging', 'umleitung', 'redirect', 'schutz'],
             ),
             new SettingField(
                 id: self::FIELD_REDIRECT_TO,
                 type: SettingField::TYPE_EMAIL,
-                label: __('Umleitungs-Adresse', 'rh-smtp'),
-                description: __('Zieladresse für die Umleitung. Der ursprüngliche Empfänger wird im Betreff vermerkt.', 'rh-smtp'),
+                label: __('Testadresse', 'rh-smtp'),
+                description: __('Dorthin gehen die Mails, solange der Testmodus umleitet. Bleibt das Feld leer, wird die Administrator-Adresse genommen. Im Kopf der Mail steht, an wen sie eigentlich gegangen wäre.', 'rh-smtp'),
                 default: '',
-                keywords: ['umleitung', 'redirect', 'adresse'],
+                keywords: ['umleitung', 'redirect', 'adresse', 'test'],
+            ),
+            new SettingField(
+                id: self::FIELD_REPORT_ENABLED,
+                type: SettingField::TYPE_BOOLEAN,
+                label: __('Sammelbericht verschicken', 'rh-smtp'),
+                description: __('Fasst die Meldungen aller Module zu einer Mail zusammen, statt jedes Modul einzeln schreiben zu lassen. Dringende Vorfälle gehen weiterhin sofort raus und warten nicht auf den Bericht.', 'rh-smtp'),
+                default: false,
+                keywords: ['bericht', 'report', 'zusammenfassung', 'wochenbericht'],
+            ),
+            new SettingField(
+                id: self::FIELD_REPORT_RHYTHM,
+                type: SettingField::TYPE_SELECT,
+                label: __('Wie oft', 'rh-smtp'),
+                description: __('Abstand zwischen zwei Berichten.', 'rh-smtp'),
+                default: 'weekly',
+                choices: [
+                    'daily' => __('Täglich', 'rh-smtp'),
+                    'weekly' => __('Wöchentlich', 'rh-smtp'),
+                    'monthly' => __('Monatlich', 'rh-smtp'),
+                ],
+                keywords: ['bericht', 'rhythmus', 'intervall'],
+            ),
+            new SettingField(
+                id: self::FIELD_REPORT_EMAIL,
+                type: SettingField::TYPE_EMAIL,
+                label: __('Bericht an', 'rh-smtp'),
+                description: __('Leer lassen für die Administrator-Adresse. In der Regel steht hier die Adresse des Betreuers, nicht die des Kunden.', 'rh-smtp'),
+                default: '',
+                keywords: ['bericht', 'empfaenger', 'adresse'],
             ),
             new SettingField(
                 id: self::FIELD_LOG_ENABLED,

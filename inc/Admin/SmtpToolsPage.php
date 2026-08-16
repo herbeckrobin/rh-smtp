@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace RhSmtp\Admin;
 
+use RhBlueprint\Core\Admin\Guard;
 use RhBlueprint\Core\Settings\SettingsPage;
 use RhSmtp\Secret;
 use RhSmtp\Smtp;
@@ -29,10 +30,20 @@ final class SmtpToolsPage
 
     public function boot(): void
     {
-        add_action('rh-blueprint/settings/tab_content_after', [$this, 'render']);
+        add_action('rh-smtp/pane', [$this, 'renderPane']);
         add_action('admin_post_' . self::ACTION_CONNECT, [$this, 'handleConnect']);
         add_action('admin_post_' . self::ACTION_MAIL, [$this, 'handleMail']);
         add_action('admin_post_' . self::ACTION_PASS, [$this, 'handlePassword']);
+    }
+
+    /**
+     * Die Werkzeuge gehören zum Versand: was man testet, ist der Zugang.
+     */
+    public function renderPane(string $pane): void
+    {
+        if ($pane === SmtpTabs::PANE_SEND) {
+            $this->render(SmtpTabs::TAB_ID);
+        }
     }
 
     public function render(string $tab): void
@@ -127,13 +138,7 @@ final class SmtpToolsPage
 
     private function guard(string $action): void
     {
-        $nonce = isset($_POST[self::NONCE]) ? sanitize_text_field(wp_unslash($_POST[self::NONCE])) : '';
-        if ($nonce === '' || ! wp_verify_nonce($nonce, $action)) {
-            wp_die(esc_html__('Sicherheitsprüfung fehlgeschlagen.', 'rh-smtp'));
-        }
-        if (! current_user_can('manage_options')) {
-            wp_die(esc_html__('Keine Berechtigung.', 'rh-smtp'));
-        }
+        Guard::form($action, '', self::NONCE);
     }
 
     /**

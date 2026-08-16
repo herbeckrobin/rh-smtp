@@ -6,6 +6,8 @@ namespace RhSmtp;
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP as PhpSmtp;
+use RhBlueprint\Core\Mail\Mail;
+use RhBlueprint\Core\Mail\MailMessage;
 use RhSmtp\Admin\SmtpGroup;
 
 /**
@@ -37,13 +39,9 @@ final class Smtp
             }
         }
 
-        // Staging-Schutz: alle Mails auf eine Adresse umleiten.
-        $redirectTo = $this->setting(SmtpGroup::FIELD_REDIRECT_TO);
-        if ((bool) rhbp_setting(SmtpGroup::GROUP_ID, SmtpGroup::FIELD_REDIRECT_ENABLED, false)
-            && $redirectTo !== '' && is_email($redirectTo)
-        ) {
-            add_filter('wp_mail', [$this, 'redirectMail'], 99);
-        }
+        // Den Staging-Schutz macht jetzt TestMode: mit Automatik nach Umgebung,
+        // mit Blockieren als zweiter Stufe, und ohne die Lücke von vorher, dass
+        // Kopienempfänger stehen blieben und die Mail trotzdem rausging.
     }
 
     public function configure(PHPMailer $phpmailer): void
@@ -82,22 +80,6 @@ final class Smtp
         $smtp->Timelimit = $timeout;
     }
 
-    /**
-     * @param array<string, mixed> $atts
-     * @return array<string, mixed>
-     */
-    public function redirectMail(array $atts): array
-    {
-        $redirectTo = $this->setting(SmtpGroup::FIELD_REDIRECT_TO);
-        $original = $atts['to'] ?? '';
-        $originalLabel = is_array($original) ? implode(', ', $original) : (string) $original;
-
-        $atts['to'] = $redirectTo;
-        $subject = is_string($atts['subject'] ?? null) ? $atts['subject'] : '';
-        $atts['subject'] = '[Umgeleitet von ' . $originalLabel . '] ' . $subject;
-
-        return $atts;
-    }
 
     /**
      * Verbindung testen ohne Mailversand. Schneller fsockopen-Vorabcheck (failt sofort
@@ -177,10 +159,30 @@ final class Smtp
             return ['ok' => false, 'message' => __('Ungültige Empfängeradresse.', 'rh-smtp')];
         }
 
-        $subject = sprintf(__('RH SMTP Testmail von %s', 'rh-smtp'), (string) wp_parse_url(home_url('/'), PHP_URL_HOST));
-        $body = __('Diese Testmail wurde über RH SMTP versendet. Wenn sie ankommt, ist der SMTP-Versand korrekt konfiguriert.', 'rh-smtp');
+        $host = (string) wp_parse_url(home_url('/'), PHP_URL_HOST);
+        $subject = sprintf(__('RH SMTP Testmail von %s', 'rh-smtp'), $host);
 
-        $sent = wp_mail($to, $subject, $body);
+        $message = new MailMessage(__('Testmail', 'rh-smtp'), $host);
+        $message->kind(\RhSmtp\Plugin::KIND_TEST);
+        $message->status(
+            MailMessage::TONE_OK,
+            __('Der Versand über SMTP funktioniert.', 'rh-smtp')
+        );
+        $message->text(__('Diese Nachricht wurde über die hinterlegten SMTP-Zugangsdaten verschickt. Dass sie angekommen ist, beweist: der Versand ist richtig eingerichtet.', 'rh-smtp'));
+        $message->rows([
+            __('Verschickt am', 'rh-smtp') => wp_date('d.m.Y H:i'),
+        ]);
+
+        $sent = Mail::send(
+            $to,
+            $subject,
+            $message,
+            sprintf(
+                /* translators: %s: Domain der Website */
+                __('Automatische Nachricht von %s, verschickt vom SMTP-Modul der Website.', 'rh-smtp'),
+                $host
+            )
+        );
 
         return $sent
             ? ['ok' => true, 'message' => sprintf(__('Testmail an %s ausgelöst. Bitte Postfach prüfen.', 'rh-smtp'), $to)]
