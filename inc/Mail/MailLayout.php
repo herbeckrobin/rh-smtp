@@ -15,11 +15,15 @@ use RhBlueprint\Core\Mail\MailMessage;
  * externen Dateien. Was hier steht, ist bewusst altmodisch, dafür kommt es
  * überall gleich an.
  *
- * Bewusst ohne Bilder: ein Logo aus dem Netz wird von den meisten Clients erst
- * nach Nachfrage geladen, dann steht in der Mail ein leerer Rahmen. Ausserdem
- * verrät ein solcher Abruf dem Absender, wann jemand die Mail geöffnet hat, was
- * bei einer Sicherheitsmeldung niemand braucht. Der Kopf ist deshalb reine
- * Schrift auf Farbfläche.
+ * Ohne Bilder, solange niemand eines mitgibt: ein Logo aus dem Netz wird von
+ * den meisten Clients erst nach Nachfrage geladen, dann steht in der Mail ein
+ * leerer Rahmen. Ausserdem verrät ein solcher Abruf dem Absender, wann jemand
+ * die Mail geöffnet hat, was bei einer Sicherheitsmeldung niemand braucht.
+ *
+ * Bei Mails an Endkunden ist die Rechnung eine andere: dort ist ein Logo
+ * erwartbar, und eine Bestellbestätigung ohne Absender-Erkennung wirkt wie
+ * Spam. Deshalb der Haken `rh-blueprint/mail/brand_logo`, den nur externe
+ * Mails nutzen. Systemmeldungen bleiben reine Schrift auf Farbfläche.
  *
  * Die Farben sind dieselben wie im Backend der Suite (assets/settings.css).
  */
@@ -115,7 +119,27 @@ final class MailLayout
             ? '<div style="margin-top:4px;font-size:13px;line-height:1.4;color:' . $subColor . ';">' . esc_html($message->subtitle) . '</div>'
             : '';
 
+        /**
+         * Ein Logo über dem Titel, für Mails an Endkunden.
+         *
+         * Der Shop hatte dafür einen eigenen Rahmen gebaut, mit eigenem Logo
+         * und eigener Farbe. Damit gab es zwei Mail-Optiken auf einer Website.
+         * Hier ist der Haken, damit ein Modul sein Aussehen mitbringen kann,
+         * ohne den Rahmen zu ersetzen.
+         *
+         * @param string      $url     Adresse des Logos. Leer: nur der Titel.
+         * @param MailMessage $message
+         */
+        $logoUrl = $message->isExternal()
+            ? (string) apply_filters('rh-blueprint/mail/brand_logo', '', $message)
+            : '';
+
+        $logo = $logoUrl !== ''
+            ? '<div style="margin-bottom:10px;"><img src="' . esc_url($logoUrl) . '" alt="" style="max-height:40px;max-width:220px;display:inline-block;"></div>'
+            : '';
+
         return '<tr><td class="rhbp-pad" style="background:' . esc_attr($accent) . ';padding:20px 28px;border-radius:8px 8px 0 0;font-family:' . self::FONT . ';">'
+            . $logo // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- oben escapt.
             . '<div style="font-size:17px;font-weight:600;line-height:1.3;color:' . self::WHITE . ';">' . esc_html($message->title) . '</div>'
             . $subtitle // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- oben escapt.
             . '</td></tr>';
@@ -144,6 +168,18 @@ final class MailLayout
 
     private static function footer(string $note): string
     {
+        /**
+         * Was unten in jeder Mail steht, wenn der Aufrufer nichts mitgibt.
+         *
+         * Bei Mails an Endkunden gehört dort die Anschrift des Absenders hin.
+         * Der Shop hatte das im eigenen Rahmen, hier ist der Haken dafür.
+         *
+         * @param string $note
+         */
+        if ($note === '') {
+            $note = (string) apply_filters('rh-blueprint/mail/footer_note', '');
+        }
+
         $text = $note !== ''
             ? nl2br(esc_html($note))
             : esc_html__('Diese Nachricht kommt automatisch von deiner Website.', 'rh-smtp');
@@ -200,6 +236,11 @@ final class MailLayout
             'bullets' => self::renderBullets($block['items']),
             'button' => self::renderButton((string) $block['label'], (string) $block['url']),
             'divider' => '<div style="height:1px;background:' . self::BORDER . ';font-size:0;line-height:0;margin:22px 0;">&nbsp;</div>',
+            // Fertiges HTML, vom Modul gebaut und dort escapt. Für Inhalte,
+            // die sich nicht in Bausteine zerlegen lassen: eine Rechnung mit
+            // Positionstabelle ist kein Textabsatz. Der Shop liefert so seine
+            // Bestellmails, ohne dafür einen zweiten Rahmen zu brauchen.
+            'html' => (string) ($block['html'] ?? ''),
             default => '',
         };
     }
