@@ -5,7 +5,7 @@
  * Plugin URI:        https://github.com/herbeckrobin/rh-smtp
  * Update URI:        https://github.com/herbeckrobin/rh-smtp
  * Description:       Versendet WordPress-Mails über einen echten SMTP-Server statt PHP mail(). Teil der rh-blueprint Kollektion.
- * Version:           0.4.0
+ * Version:           0.5.0
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Author:            Robin Herbeck
@@ -21,7 +21,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('RHSMTP_VERSION', '0.4.0');
+define('RHSMTP_VERSION', '0.5.0');
 define('RHSMTP_PLUGIN_FILE', __FILE__);
 define('RHSMTP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
