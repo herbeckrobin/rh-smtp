@@ -160,7 +160,8 @@ final class Smtp
         }
 
         $host = (string) wp_parse_url(home_url('/'), PHP_URL_HOST);
-        $subject = sprintf(__('RH SMTP Testmail von %s', 'rh-smtp'), $host);
+        /* translators: 1: Name des Moduls, 2: Hostname der Website */
+        $subject = sprintf(__('%1$s Testmail von %2$s', 'rh-smtp'), (function_exists('rhbp_brand') ? rhbp_brand('name', 'RH') : 'RH') . ' SMTP', $host);
 
         $message = new MailMessage(__('Testmail', 'rh-smtp'), $host);
         $message->kind(\RhSmtp\Plugin::KIND_TEST);

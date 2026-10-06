@@ -4,7 +4,7 @@ Tags: smtp, mail, email, deliverability
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.5.2
+Stable tag: 0.5.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -17,6 +17,10 @@ RH SMTP routes wp_mail through an SMTP server (e.g. a Mailcow instance). Active 
 Part of the rh-blueprint collection. Settings live under RH Blueprint > SMTP.
 
 == Changelog ==
+
+= 0.5.3 =
+* White label: when the core (2.9 or later) has a brand set, the module name in notices uses the brand instead of "RH". The test mail subject follows the brand name.
+* Author URI points to robinherbeck.com. Adds the GPLv2 LICENSE file.
 
 = 0.5.2 =
 * Update checks: use a GitHub token from RH_GITHUB_TOKEN (environment variable or wp-config constant) when one is set, which lifts the API limit from 60 to 5,000 requests per hour. Without a token nothing changes.
